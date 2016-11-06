@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 4860 $ $Date:: 2016-10-19 #$ $Author: serge $
+// $Revision: 4917 $ $Date:: 2016-11-06 #$ $Author: serge $
 
 #ifndef SIMPLE_VOIP_I_SIMPLE_VOIP_H
 #define SIMPLE_VOIP_I_SIMPLE_VOIP_H
@@ -34,6 +34,7 @@ struct Config
 {
     std::string     username;
     std::string     password;
+    std::string     called_id;
     std::string     host;
     uint32_t        port;
 };

@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-// $Revision: 4853 $ $Date:: 2016-10-16 #$ $Author: serge $
+// $Revision: 4920 $ $Date:: 2016-11-06 #$ $Author: serge $
 
 #ifndef SIMPLE_VOIP_OBJECTS_H
 #define SIMPLE_VOIP_OBJECTS_H
@@ -54,6 +54,17 @@ struct RequestObject: public ForwardObject
 struct ResponseObject: public CallbackObject
 {
     uint32_t        job_id;
+};
+
+// ******************* REGISTRATION EVENTS *******************
+
+struct Registered: public CallbackObject
+{
+};
+
+struct Unregistered: public CallbackObject
+{
+    std::string     descr;
 };
 
 // ******************* ERRORS *******************
@@ -97,6 +108,7 @@ struct PlayFileRequest: public RequestObject
 {
     uint32_t        call_id;
     std::string     filename;
+    bool            play_in_loop;
 };
 
 struct PlayFileResponse: public ResponseObject
@@ -131,7 +143,7 @@ struct RecordFileStopResponse: public ResponseObject
 {
 };
 
-// ******************* BEFORE CONNECTION MESSAGES *******************
+// ******************* "BEFORE CONNECTION" EVENTS *******************
 
 struct Failed: public CallbackObject
 {
@@ -163,7 +175,7 @@ struct Connected: public CallbackObject
     uint32_t        call_id;
 };
 
-// ******************* AFTER CONNECTION MESSAGES *******************
+// ******************* "AFTER CONNECTION" EVENTS *******************
 
 struct ConnectionLost: public CallbackObject
 {
