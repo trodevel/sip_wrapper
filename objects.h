@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-// $Revision: 4920 $ $Date:: 2016-11-06 #$ $Author: serge $
+// $Revision: 4935 $ $Date:: 2016-11-08 #$ $Author: serge $
 
 #ifndef SIMPLE_VOIP_OBJECTS_H
 #define SIMPLE_VOIP_OBJECTS_H
@@ -54,17 +54,6 @@ struct RequestObject: public ForwardObject
 struct ResponseObject: public CallbackObject
 {
     uint32_t        job_id;
-};
-
-// ******************* REGISTRATION EVENTS *******************
-
-struct Registered: public CallbackObject
-{
-};
-
-struct Unregistered: public CallbackObject
-{
-    std::string     descr;
 };
 
 // ******************* ERRORS *******************
@@ -149,6 +138,7 @@ struct Failed: public CallbackObject
 {
     enum type_e
     {
+        LOGGED_OUT,
         FAILED,
         REFUSED,
         BUSY,

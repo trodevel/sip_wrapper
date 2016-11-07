@@ -1,0 +1,96 @@
+# Simple VOIP's PLAYER Finite State Machine.
+#
+# Copyright (C) 2016 Sergey Kolevatov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+
+# $Id: player_fsm.gv 4933 2016-11-07 23:27:31Z serge $
+#
+# execute: FL=player_fsm; dot -l sdl.ps -Tps $FL.gv -o $FL.ps; ps2pdf $FL.ps $FL.pdf
+
+digraph PLAYER_FSM
+{
+
+label="$Id: player_fsm.gv 4933 2016-11-07 23:27:31Z serge $";
+
+size="7,7";
+ratio=fill;
+splines=true;
+node [peripheries=0 style=filled fillcolor=white]
+
+######################################################
+# States
+
+label="player (in state CONNECTED)"
+
+START               [ shape = sdl_start ]
+NOTREADY            [ label="NOTREADY" shape = sdl_state fillcolor=yellow ]
+IDLE                [ label="IDLE"     shape = sdl_state fillcolor=yellow ]
+BUSY                [ label="BUSY"     shape = sdl_state fillcolor=yellow ]
+
+######################################################
+# Actions
+
+
+
+NOTREADY__PLAY_FILE_REQ          [ label=PlayFileRequest                   shape = sdl_input_from_left fillcolor=green]
+NOTREADY__PLAY_FILE_STOP_REQ     [ label=PlayFileStopRequest               shape = sdl_input_from_left fillcolor=green]
+NOTREADY__RECORD_FILE_REQ        [ label=RecordFileRequest                 shape = sdl_input_from_left fillcolor=green]
+NOTREADY__RECORD_FILE_STOP_REQ   [ label=RecordFileStopRequest             shape = sdl_input_from_left fillcolor=green]
+NOTREADY__MEDIA_ACTIVE           [ label="media is active"                 shape = sdl_input_from_right ]
+NOTREADY__SEND_REJECT_RESP       [ label=RejectResponse                    shape = sdl_output_to_left  fillcolor=orange ]
+
+
+IDLE__PLAY_FILE_STOP_REQ     [ label=PlayFileStopRequest               shape = sdl_input_from_left fillcolor=green]
+IDLE__SEND_ERROR_RESP        [ label=ErrorResponse                     shape = sdl_output_to_left  fillcolor=orange ]
+IDLE__PLAY_FILE_REQ          [ label=PlayFileRequest                   shape = sdl_input_from_left fillcolor=green]
+IDLE__SEND_PLAY_FILE_REQ     [ label="start playing file"              shape = sdl_call ]
+IDLE__SEND_PLAY_FILE_RESP    [ label=PlayFileResponse                  shape = sdl_output_to_left  fillcolor=orange ]
+IDLE__IS_OK                  [ label="playing was\nstarted"            shape = diamond peripheries=1]
+
+BUSY__PLAY_FILE_REQ     [ label=PlayFileRequest                   shape = sdl_input_from_left fillcolor=green]
+BUSY__SEND_REJECT       [ label=RejectResponse                    shape = sdl_output_to_left  fillcolor=orange ]
+BUSY__SEND_ERROR        [ label=ErrorResponse                     shape = sdl_output_to_left  fillcolor=orange ]
+BUSY__PLAY_FILE_FINISHED        [ label="playing was\nfinished"   shape = sdl_input_from_right ]
+BUSY__PLAY_FILE_STOP_REQ        [ label=PlayFileStopRequest       shape = sdl_input_from_left fillcolor=green]
+BUSY__CALL_PLAY_FILE_STOP       [ label="stop playing file"       shape = sdl_call ]
+BUSY__SEND_PLAY_FILE_STOP_RESP  [ label=PlayFileStopResponse      shape = sdl_output_to_left  fillcolor=orange ]
+
+######################################################
+# Transitions
+
+START -> NOTREADY
+
+NOTREADY -> NOTREADY__PLAY_FILE_REQ        -> NOTREADY__SEND_REJECT_RESP      -> NOTREADY
+NOTREADY -> NOTREADY__PLAY_FILE_STOP_REQ   -> NOTREADY__SEND_REJECT_RESP
+NOTREADY -> NOTREADY__RECORD_FILE_REQ      -> NOTREADY__SEND_REJECT_RESP      -> NOTREADY
+NOTREADY -> NOTREADY__RECORD_FILE_STOP_REQ -> NOTREADY__SEND_REJECT_RESP
+NOTREADY -> NOTREADY__MEDIA_ACTIVE         -> IDLE
+
+
+IDLE -> IDLE__PLAY_FILE_STOP_REQ -> IDLE__SEND_ERROR_RESP      -> IDLE
+IDLE -> IDLE__PLAY_FILE_REQ      -> IDLE__SEND_PLAY_FILE_REQ   -> IDLE__IS_OK
+               IDLE__IS_OK -> IDLE__SEND_PLAY_FILE_RESP          [ label="yes" ]
+                                     IDLE__SEND_PLAY_FILE_RESP -> BUSY
+               IDLE__IS_OK -> BUSY__SEND_ERROR   [ label="error occured" ]
+                                     BUSY__SEND_ERROR   -> IDLE
+
+
+BUSY -> BUSY__PLAY_FILE_REQ      -> BUSY__SEND_REJECT   -> BUSY
+BUSY -> BUSY__PLAY_FILE_FINISHED -> IDLE
+#BUSY -> BUSY__PLAY_FILE_RESP     -> BUSY__SEND_PLAY_FILE_RESP -> BUSY
+BUSY -> BUSY__PLAY_FILE_STOP_REQ -> BUSY__CALL_PLAY_FILE_STOP -> BUSY__SEND_PLAY_FILE_STOP_RESP -> IDLE
+
+}

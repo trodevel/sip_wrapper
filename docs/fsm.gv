@@ -16,14 +16,14 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id: fsm.gv 4855 2016-10-16 20:08:32Z serge $
+# $Id: fsm.gv 4931 2016-11-07 23:14:53Z serge $
 #
 # execute: FL=fsm; dot -l sdl.ps -Tps $FL.gv -o $FL.ps; ps2pdf $FL.ps $FL.pdf
 
 digraph FSM
 {
 
-label="$Id: fsm.gv 4855 2016-10-16 20:08:32Z serge $";
+label="$Id: fsm.gv 4931 2016-11-07 23:14:53Z serge $";
 
 size="7,7";
 ratio=fill;
@@ -36,20 +36,13 @@ node [peripheries=0 style=filled fillcolor=white]
 START                      [ shape = sdl_start ]
 ANY                        [ label = "*" shape = sdl_state fillcolor=yellow ]
 NOTLOGGED                  [ shape = sdl_state fillcolor=yellow ]
+W_RELOGIN                  [ shape = sdl_state fillcolor=khaki1 ]
+W_LOGIN                    [ shape = sdl_state fillcolor=khaki1 ]
 IDLE                       [ shape = sdl_state fillcolor=yellow ]
 W_INITIATE_CALL_RESPONSE   [ shape = sdl_state fillcolor=yellow ]
 W_CONNECTED                [ shape = sdl_state fillcolor=yellow ]
 CONNECTED                  [ shape = sdl_state fillcolor=yellow ]
 DOWN                       [ shape = sdl_state fillcolor=yellow ]
-
-
-subgraph "cluster_player"
-{
-    label="player (in state CONNECTED)"
-
-    PLAYER_IDLE                [ label="IDLE" shape = sdl_state fillcolor=yellow ]
-    PLAYER_BUSY                [ label="BUSY" shape = sdl_state fillcolor=yellow ]
-}
 
 ######################################################
 # Actions
@@ -58,10 +51,21 @@ ANY__SHUTDOWN                     [ label="shutdown()"                      shap
 ANY__CALL_SHUTDOWN                [ label="shutdown"                        shape = sdl_call ]
 
 NOTLOGGED__INIT                   [ label="init()"                          shape = sdl_input_from_left fillcolor=cyan]
-NOTLOGGED__CALL_LOGIN             [ label="login"                           shape = sdl_call ]
+NOTLOGGED__SEND_LOGIN             [ label="login/register"                  shape = sdl_output_to_right ]
+
+W_LOGIN__LOGGED                   [ label="client logged in"                shape = sdl_input_from_right ]
+W_LOGIN__FAILED                   [ label="client failed\nto log in"        shape = sdl_input_from_right ]
+W_LOGIN__SET_TIMER                [ label="set timer"                       shape = sdl_set ]
+W_LOGIN__INITIATE                 [ label=InitiateCallRequest               shape = sdl_input_from_left fillcolor=green ]
+W_LOGIN__SEND_REJECT              [ label=RejectResponse                    shape = sdl_output_to_left  fillcolor=orange ]
+
+W_RELOGIN__TIMER                  [ label="on timer"                        shape = sdl_input_from_left ]
+W_RELOGIN__INITIATE               [ label=InitiateCallRequest               shape = sdl_input_from_left fillcolor=green ]
+W_RELOGIN__SEND_REJECT            [ label=RejectResponse                    shape = sdl_output_to_left  fillcolor=orange ]
 
 IDLE__INITIATE                    [ label=InitiateCallRequest               shape = sdl_input_from_left fillcolor=green ]
 IDLE__CALL_ICR                    [ label="initiate call"                   shape = sdl_call ]
+IDLE__LOGGEDOUT                   [ label="client was\nlogged out"          shape = sdl_input_from_right ]
 
 W_INITIATE_CALL_RESPONSE__ICR        [ label="call was\ninitiated"             shape = sdl_input_from_right ]
 W_INITIATE_CALL_RESPONSE__ERROR      [ label="error occured"                   shape = sdl_input_from_right ]
@@ -70,6 +74,8 @@ W_INITIATE_CALL_RESPONSE__SEND_ICR   [ label=InitiateCallResponse              s
 W_INITIATE_CALL_RESPONSE__DROP_REQ   [ label=DropRequest                       shape = sdl_input_from_left  fillcolor=green ]
 W_INITIATE_CALL_RESPONSE__CALL_TERMINATE   [ label="terminate call"            shape = sdl_call ]
 W_INITIATE_CALL_RESPONSE__SEND_DROP_RESP   [ label=DropResponse                shape = sdl_output_to_left   fillcolor=orange ]
+W_INITIATE_CALL_RESPONSE__LOGGEDOUT        [ label="client was\nlogged out"          shape = sdl_input_from_right ]
+W_INITIATE_CALL_RESPONSE__SEND_REJECT      [ label=RejectResponse              shape = sdl_output_to_left   fillcolor=orange ]
 
 W_CONNECTED__DROP_REQ              [ label=DropRequest                       shape = sdl_input_from_left fillcolor=green ]
 W_CONNECTED__CONNECTED             [ label="connected\nto called party"      shape = sdl_input_from_right ]
@@ -80,34 +86,18 @@ W_CONNECTED__DIALING               [ label="started\ndialing"                sha
 W_CONNECTED__SEND_DIALING          [ label=Dialing                           shape = sdl_output_to_left  fillcolor=pink ]
 W_CONNECTED__RINGING               [ label="started\nringing"                shape = sdl_input_from_right ]
 W_CONNECTED__SEND_RINGING          [ label=Ringing                           shape = sdl_output_to_left  fillcolor=pink ]
+W_CONNECTED__LOGGEDOUT             [ label="client was\nlogged out"          shape = sdl_input_from_right ]
+W_CONNECTED__SEND_FAILED_2         [ label=Failed                            shape = sdl_output_to_left  fillcolor=pink ]
 
 CONNECTED__DROP_REQ               [ label=DropRequest                       shape = sdl_input_from_left fillcolor=green ]
 CONNECTED__DTMF_TONE              [ label="received\nDTMF tone"             shape = sdl_input_from_right ]
 CONNECTED__SEND_DTMF_TONE         [ label=DtmfTone                          shape = sdl_output_to_left fillcolor=pink ]
-CONNECTED__DURATION               [ label="call duration\nincreased by 1 sec"        shape = sdl_input_from_right ]
-CONNECTED__SEND_DURATION          [ label=CallDuration                      shape = sdl_output_to_left fillcolor=pink ]
+#CONNECTED__DURATION               [ label="call duration\nincreased by 1 sec"        shape = sdl_input_from_right ]
+#CONNECTED__SEND_DURATION          [ label=CallDuration                      shape = sdl_output_to_left fillcolor=pink ]
 CONNECTED__CONN_LOST              [ label="connection\nwas lost"            shape = sdl_input_from_right ]
 CONNECTED__SEND_CONN_LOST         [ label=ConnectionLost                    shape = sdl_output_to_left fillcolor=pink ]
-
-subgraph "cluster_player"
-{
-
-PLAYER_IDLE__PLAY_FILE_STOP_REQ     [ label=PlayFileStopRequest               shape = sdl_input_from_left fillcolor=green]
-PLAYER_IDLE__SEND_ERROR_RESP        [ label=ErrorResponse                     shape = sdl_output_to_left  fillcolor=orange ]
-PLAYER_IDLE__PLAY_FILE_REQ          [ label=PlayFileRequest                   shape = sdl_input_from_left fillcolor=green]
-PLAYER_IDLE__SEND_PLAY_FILE_REQ     [ label="start playing file"              shape = sdl_call ]
-PLAYER_IDLE__SEND_PLAY_FILE_RESP    [ label=PlayFileResponse                  shape = sdl_output_to_left  fillcolor=orange ]
-PLAYER_IDLE__IS_OK                  [ label="playing was\nstarted"            shape = diamond peripheries=1]
-
-PLAYER_BUSY__PLAY_FILE_REQ     [ label=PlayFileRequest                   shape = sdl_input_from_left fillcolor=green]
-PLAYER_BUSY__SEND_REJECT       [ label=RejectResponse                    shape = sdl_output_to_left  fillcolor=orange ]
-PLAYER_BUSY__SEND_ERROR        [ label=ErrorResponse                     shape = sdl_output_to_left  fillcolor=orange ]
-PLAYER_BUSY__PLAY_FILE_FINISHED        [ label="playing was\nfinished"   shape = sdl_input_from_right ]
-PLAYER_BUSY__PLAY_FILE_STOP_REQ        [ label=PlayFileStopRequest       shape = sdl_input_from_left fillcolor=green]
-PLAYER_BUSY__CALL_PLAY_FILE_STOP       [ label="stop playing file"       shape = sdl_call ]
-PLAYER_BUSY__SEND_PLAY_FILE_STOP_RESP  [ label=PlayFileStopResponse      shape = sdl_output_to_left  fillcolor=orange ]
-
-}
+CONNECTED__LOGGEDOUT              [ label="client was\nlogged out"          shape = sdl_input_from_right ]
+CONNECTED__SEND_CONN_LOST_2       [ label=ConnectionLost                    shape = sdl_output_to_left fillcolor=pink ]
 
 ######################################################
 # Transitions
@@ -116,36 +106,34 @@ START -> NOTLOGGED
 
 ANY -> ANY__SHUTDOWN         -> ANY__CALL_SHUTDOWN    -> DOWN
 
-NOTLOGGED -> NOTLOGGED__INIT -> NOTLOGGED__CALL_LOGIN -> IDLE
+NOTLOGGED -> NOTLOGGED__INIT -> NOTLOGGED__SEND_LOGIN -> W_LOGIN
+
+W_LOGIN -> W_LOGIN__LOGGED   -> IDLE
+W_LOGIN -> W_LOGIN__FAILED   -> W_LOGIN__SET_TIMER   -> W_RELOGIN
+W_LOGIN -> W_LOGIN__INITIATE -> W_LOGIN__SEND_REJECT -> W_LOGIN
+
+W_RELOGIN -> W_RELOGIN__TIMER    -> NOTLOGGED__SEND_LOGIN
+W_RELOGIN -> W_RELOGIN__INITIATE -> W_RELOGIN__SEND_REJECT -> W_RELOGIN
 
 IDLE -> IDLE__INITIATE       -> IDLE__CALL_ICR        -> W_INITIATE_CALL_RESPONSE
+IDLE -> IDLE__LOGGEDOUT      -> W_LOGIN__SET_TIMER
 
-W_INITIATE_CALL_RESPONSE -> W_INITIATE_CALL_RESPONSE__ICR      -> W_INITIATE_CALL_RESPONSE__SEND_ICR       -> W_CONNECTED
-W_INITIATE_CALL_RESPONSE -> W_INITIATE_CALL_RESPONSE__ERROR    -> W_INITIATE_CALL_RESPONSE__SEND_ERROR     -> IDLE
-W_INITIATE_CALL_RESPONSE -> W_INITIATE_CALL_RESPONSE__DROP_REQ -> W_INITIATE_CALL_RESPONSE__CALL_TERMINATE -> W_INITIATE_CALL_RESPONSE__SEND_DROP_RESP -> IDLE
+W_INITIATE_CALL_RESPONSE -> W_INITIATE_CALL_RESPONSE__ICR       -> W_INITIATE_CALL_RESPONSE__SEND_ICR       -> W_CONNECTED
+W_INITIATE_CALL_RESPONSE -> W_INITIATE_CALL_RESPONSE__ERROR     -> W_INITIATE_CALL_RESPONSE__SEND_ERROR     -> IDLE
+W_INITIATE_CALL_RESPONSE -> W_INITIATE_CALL_RESPONSE__DROP_REQ  -> W_INITIATE_CALL_RESPONSE__CALL_TERMINATE -> W_INITIATE_CALL_RESPONSE__SEND_DROP_RESP -> IDLE
+W_INITIATE_CALL_RESPONSE -> W_INITIATE_CALL_RESPONSE__LOGGEDOUT -> W_INITIATE_CALL_RESPONSE__SEND_REJECT    -> W_LOGIN__SET_TIMER
 
 W_CONNECTED -> W_CONNECTED__DROP_REQ  -> W_INITIATE_CALL_RESPONSE__CALL_TERMINATE
 W_CONNECTED -> W_CONNECTED__CONNECTED -> W_CONNECTED__SEND_CONNECTED -> CONNECTED
 W_CONNECTED -> W_CONNECTED__FAILED    -> W_CONNECTED__SEND_FAILED    -> IDLE
 W_CONNECTED -> W_CONNECTED__DIALING   -> W_CONNECTED__SEND_DIALING   -> W_CONNECTED
 W_CONNECTED -> W_CONNECTED__RINGING   -> W_CONNECTED__SEND_RINGING   -> W_CONNECTED
+W_CONNECTED -> W_CONNECTED__LOGGEDOUT -> W_CONNECTED__SEND_FAILED_2  -> W_LOGIN__SET_TIMER
 
 CONNECTED -> CONNECTED__DROP_REQ           -> W_INITIATE_CALL_RESPONSE__CALL_TERMINATE
 CONNECTED -> CONNECTED__CONN_LOST          -> CONNECTED__SEND_CONN_LOST                -> IDLE
 CONNECTED -> CONNECTED__DTMF_TONE          -> CONNECTED__SEND_DTMF_TONE                -> CONNECTED
-CONNECTED -> CONNECTED__DURATION           -> CONNECTED__SEND_DURATION                 -> CONNECTED
-
-PLAYER_IDLE -> PLAYER_IDLE__PLAY_FILE_STOP_REQ -> PLAYER_IDLE__SEND_ERROR_RESP      -> PLAYER_IDLE
-PLAYER_IDLE -> PLAYER_IDLE__PLAY_FILE_REQ      -> PLAYER_IDLE__SEND_PLAY_FILE_REQ   -> PLAYER_IDLE__IS_OK
-               PLAYER_IDLE__IS_OK -> PLAYER_IDLE__SEND_PLAY_FILE_RESP          [ label="yes" ]
-                                     PLAYER_IDLE__SEND_PLAY_FILE_RESP -> PLAYER_BUSY
-               PLAYER_IDLE__IS_OK -> PLAYER_BUSY__SEND_ERROR   [ label="error occured" ]
-                                     PLAYER_BUSY__SEND_ERROR   -> PLAYER_IDLE
-
-
-PLAYER_BUSY -> PLAYER_BUSY__PLAY_FILE_REQ      -> PLAYER_BUSY__SEND_REJECT   -> PLAYER_BUSY
-PLAYER_BUSY -> PLAYER_BUSY__PLAY_FILE_FINISHED -> PLAYER_IDLE
-#PLAYER_BUSY -> PLAYER_BUSY__PLAY_FILE_RESP     -> PLAYER_BUSY__SEND_PLAY_FILE_RESP -> PLAYER_BUSY
-PLAYER_BUSY -> PLAYER_BUSY__PLAY_FILE_STOP_REQ -> PLAYER_BUSY__CALL_PLAY_FILE_STOP -> PLAYER_BUSY__SEND_PLAY_FILE_STOP_RESP -> PLAYER_IDLE
+#CONNECTED -> CONNECTED__DURATION           -> CONNECTED__SEND_DURATION                 -> CONNECTED
+CONNECTED -> CONNECTED__LOGGEDOUT          -> CONNECTED__SEND_CONN_LOST_2              -> W_LOGIN__SET_TIMER
 
 }
