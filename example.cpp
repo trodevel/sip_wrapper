@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 4868 $ $Date:: 2016-10-21 #$ $Author: serge $
+// $Revision: 5025 $ $Date:: 2016-11-17 #$ $Author: serge $
 
 #include <iostream>         // cout
 #include <typeinfo>
@@ -295,12 +295,15 @@ void load( const char * filename, simple_voip::Config & cfg )
     std::ifstream file( filename );
     std::string l;
 
+    getline( file, cfg.called_id );
     getline( file, cfg.username );
     getline( file, cfg.password );
     getline( file, cfg.host );
     getline( file, l );
-
     cfg.port    = stoi( l );
+    getline( file, l );
+    cfg.relogin_pause = stoi( l );
+    getline( file, cfg.agent_name );
 }
 
 int main()
@@ -329,7 +332,7 @@ int main()
     for( auto & t : tg )
         t.join();
 
-    dummy.Dummy::shutdown();
+    dummy.shutdown();
 
     std::cout << "Done! =)" << std::endl;
 

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 4936 $ $Date:: 2016-11-08 #$ $Author: serge $
+// $Revision: 5024 $ $Date:: 2016-11-17 #$ $Author: serge $
 
 #ifndef SIMPLE_VOIP_I_SIMPLE_VOIP_H
 #define SIMPLE_VOIP_I_SIMPLE_VOIP_H
@@ -38,6 +38,7 @@ struct Config
     std::string     host;
     uint32_t        port;
     uint32_t        relogin_pause; // pause in seconds before the next login attempt
+    std::string     agent_name;
 };
 
 class ForwardObject;
